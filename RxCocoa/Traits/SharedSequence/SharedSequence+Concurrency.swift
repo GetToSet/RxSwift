@@ -24,17 +24,20 @@ public extension SharedSequence {
     /// ```
     @MainActor var values: AsyncStream<Element> {
         AsyncStream { continuation in
-            // It is safe to ignore the `onError` closure here since
-            // Shared Sequences (`Driver` and `Signal`) cannot fail
-            let disposable = self.asObservable()
-                .subscribe(
-                    onNext: { value in continuation.yield(value) },
-                    onCompleted: { continuation.finish() },
-                    onDisposed: { continuation.onTermination?(.cancelled) }
-                )
+            Task {
+                // It is safe to ignore the `onError` closure here since
+                // Shared Sequences (`Driver` and `Signal`) cannot fail
+                let disposable = self.asObservable()
+                    .subscribe(
+                        onNext: { value in continuation.yield(value) },
+                        onCompleted: { continuation.finish() }
+                    )
 
-            continuation.onTermination = { @Sendable _ in
-                disposable.dispose()
+                continuation.onTermination = { @Sendable termination in
+                    if termination == .cancelled {
+                        disposable.dispose()
+                    }
+                }
             }
         }
     }

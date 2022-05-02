@@ -20,18 +20,16 @@ class SharedSequenceConcurrencyTests: RxTest {
 
 @available(macOS 10.15, iOS 13.0, watchOS 6.0, tvOS 13.0, *)
 extension SharedSequenceConcurrencyTests {
-    @MainActor func testAwaitsValuesAndFinishes() {
+    func testAwaitsValuesAndFinishes() async {
         let driver = Driver.from(1...10)
 
-        Task {
-            var values = [Int]()
+        var values = [Int]()
 
-            for await value in driver.values {
-                values.append(value)
-            }
-
-            XCTAssertEqual(values, Array(1...10))
+        for await value in await driver.values {
+            values.append(value)
         }
+
+        XCTAssertEqual(values, Array(1...10))
     }
 }
 #endif
